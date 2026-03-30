@@ -1,0 +1,94 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/surojuvenkatesh20/bank-mgmt/utils"
+)
+
+func createTestTransfer(t *testing.T, account1, account2 Account) Transfer {
+
+	arg := CreateTransferParams{
+		FromAccountID: sql.NullInt64{Int64: account1.ID, Valid: true},
+		ToAccountID:   sql.NullInt64{Int64: account2.ID, Valid: true},
+		Amount:        utils.GenerateRandomMoney(),
+	}
+
+	transfer, err := testQueries.CreateTransfer(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, transfer)
+
+	require.Equal(t, arg.FromAccountID, transfer.FromAccountID)
+	require.Equal(t, arg.ToAccountID, transfer.ToAccountID)
+	require.Equal(t, arg.Amount, transfer.Amount)
+
+	require.NotZero(t, transfer.ID)
+	require.NotZero(t, transfer.CreatedAt)
+	return transfer
+}
+
+func TestCreateTransfer(t *testing.T) {
+	account1, account2 := createTestAccount(t), createTestAccount(t)
+	createTestTransfer(t, account1, account2)
+}
+
+func TestGetTransfer(t *testing.T) {
+	account1, account2 := createTestAccount(t), createTestAccount(t)
+	transfer1 := createTestTransfer(t, account1, account2)
+
+	transfer2, err := testQueries.GetTransfer(context.Background(), transfer1.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, transfer2)
+
+	require.Equal(t, transfer1.ID, transfer2.ID)
+	require.Equal(t, transfer1.Amount, transfer2.Amount)
+	require.Equal(t, transfer1.FromAccountID, transfer2.FromAccountID)
+	require.Equal(t, transfer1.ToAccountID, transfer2.ToAccountID)
+	require.Equal(t, transfer1.CreatedAt, transfer2.CreatedAt, time.Second)
+
+}
+
+func TestUpdateTransfer(t *testing.T) {
+	account1, account2 := createTestAccount(t), createTestAccount(t)
+	transfer1 := createTestTransfer(t, account1, account2)
+
+	arg := UpdateTransferParams{
+		Amount: utils.GenerateRandomMoney(),
+		ID:     transfer1.ID,
+	}
+	transfer2, err := testQueries.UpdateTransfer(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, transfer2)
+
+	require.Equal(t, transfer1.ID, transfer2.ID)
+	require.Equal(t, arg.Amount, transfer2.Amount)
+	require.Equal(t, transfer1.CreatedAt, transfer2.CreatedAt, time.Second)
+	require.Equal(t, transfer1.FromAccountID, transfer2.FromAccountID)
+	require.Equal(t, transfer1.ToAccountID, transfer2.ToAccountID)
+}
+
+func TestListTransfers(t *testing.T) {
+	account1, account2 := createTestAccount(t), createTestAccount(t)
+	for i := 0; i < 10; i++ {
+		createTestTransfer(t, account1, account2)
+	}
+
+	arg := ListTransfersParams{
+		Limit:         5,
+		Offset:        1,
+		FromAccountID: sql.NullInt64{Int64: account1.ID, Valid: true},
+		ToAccountID:   sql.NullInt64{Int64: account2.ID, Valid: true},
+	}
+	transfers, err := testQueries.ListTransfers(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, transfers)
+	require.Len(t, transfers, 5)
+
+	for _, transfer := range transfers {
+		require.NotEmpty(t, transfer)
+	}
+}
