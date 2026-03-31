@@ -1,0 +1,49 @@
+Table accounts as a{
+  id bigserial [pk]
+  owner varchar [ref: > u.username, NOT NULL] 
+  balance bigint [NOT NULL]
+  currency varchar [NOT NULL]
+  created_at timestamptz [default: `now()`]
+
+  Indexes {
+    owner
+    (owner, currency) [UNIQUE]
+  }
+}
+
+Table entries as e{
+  id bigserial [pk]
+  account_id bigserial [ref: > a.id, NOT NULL]
+  amount bigint [NOT NULL, note: 'Can be positive or negative']
+  created_at timestamptz [default: `now()`]
+
+  Indexes {
+    account_id
+  }
+}
+
+Table transfers as t{
+  id bigserial [pk]
+  from_account_id bigserial [ref: > a.id, NOT NULL]
+  to_account_id bigserial [ref: > a.id, NOT NULL]
+  amount bigint  [NOT NULL, note: 'always be positive']
+  created_at timestamptz [default: `now()`]
+
+  Indexes {
+    id
+    from_account_id
+    to_account_id
+    (from_account_id, to_account_id)
+  }
+}
+
+
+Table users as u {
+    id bigserial 
+    username varchar [pk]
+    hashed_password varchar [NOT NULL]
+    full_name varchar [NOT NULL]
+    email varchar [UNIQUE, NOT NULL]
+    password_changed_at timestamptz [NOT NULL, default: '0001-01-01 00:00:00Z']
+    created_at timestamptz [default: `now()`]
+}

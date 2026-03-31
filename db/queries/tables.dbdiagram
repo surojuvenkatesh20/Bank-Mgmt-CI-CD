@@ -1,0 +1,96 @@
+{
+  "version": "1.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "detailLevel": "All",
+  "tablePositions": [
+    {
+      "name": "accounts",
+      "schemaName": "public",
+      "x": 63,
+      "y": -195
+    },
+    {
+      "name": "entries",
+      "schemaName": "public",
+      "x": -238,
+      "y": 8
+    },
+    {
+      "name": "transfers",
+      "schemaName": "public",
+      "x": 521.6432568455955,
+      "y": -143.45530616213978
+    },
+    {
+      "name": "users",
+      "schemaName": "public",
+      "x": 22.82106935663336,
+      "y": 328.0672348716976
+    }
+  ],
+  "tableGroupCollapseStates": [],
+  "stickyNoteLayouts": [],
+  "referencePaths": [
+    {
+      "firstFieldNames": [
+        "username"
+      ],
+      "firstTableName": "users",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "owner"
+      ],
+      "secondTableName": "accounts",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "accounts",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "account_id"
+      ],
+      "secondTableName": "entries",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "accounts",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "from_account_id"
+      ],
+      "secondTableName": "transfers",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "accounts",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "to_account_id"
+      ],
+      "secondTableName": "transfers",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    }
+  ]
+}

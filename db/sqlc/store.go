@@ -6,13 +6,18 @@ import (
 	"fmt"
 )
 
-type Store struct {
+type Store interface {
+	TransferTx(ctx context.Context, arg TransferTxRequest) (TransferTxResponse, error)
+	Querier
+}
+
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
@@ -20,7 +25,7 @@ func NewStore(db *sql.DB) *Store {
 
 var txKey = struct{}{}
 
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	//Begin a transaction
 	//Create a new queries object with transaction tx
 	//run the function passed in params
@@ -62,7 +67,7 @@ type TransferTxResponse struct {
 	Transfer    Transfer `json:"transfer"`
 }
 
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxRequest) (TransferTxResponse, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxRequest) (TransferTxResponse, error) {
 	var result TransferTxResponse
 	err := store.execTx(ctx, func(q *Queries) error {
 		txName := ctx.Value(txKey)
@@ -71,8 +76,8 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxRequest) (Tran
 
 		fmt.Println(txName, " create transfer")
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
-			FromAccountID: sql.NullInt64{Int64: arg.FromAccountId, Valid: true},
-			ToAccountID:   sql.NullInt64{Int64: arg.ToAccountId, Valid: true},
+			FromAccountID: arg.FromAccountId,
+			ToAccountID:   arg.ToAccountId,
 			Amount:        arg.Amount,
 		})
 		if err != nil {
@@ -81,7 +86,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxRequest) (Tran
 
 		fmt.Println(txName, " create entry 1")
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
-			AccountID: sql.NullInt64{Int64: arg.FromAccountId, Valid: true},
+			AccountID: arg.FromAccountId,
 			Amount:    -arg.Amount,
 		})
 		if err != nil {
@@ -90,7 +95,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxRequest) (Tran
 
 		fmt.Println(txName, " create entry 2")
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
-			AccountID: sql.NullInt64{Int64: arg.ToAccountId, Valid: true},
+			AccountID: arg.ToAccountId,
 			Amount:    arg.Amount,
 		})
 		if err != nil {

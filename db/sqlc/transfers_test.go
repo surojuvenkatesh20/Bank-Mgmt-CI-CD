@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -13,8 +12,8 @@ import (
 func createTestTransfer(t *testing.T, account1, account2 Account) Transfer {
 
 	arg := CreateTransferParams{
-		FromAccountID: sql.NullInt64{Int64: account1.ID, Valid: true},
-		ToAccountID:   sql.NullInt64{Int64: account2.ID, Valid: true},
+		FromAccountID: account1.ID,
+		ToAccountID:   account2.ID,
 		Amount:        utils.GenerateRandomMoney(),
 	}
 
@@ -80,8 +79,8 @@ func TestListTransfers(t *testing.T) {
 	arg := ListTransfersParams{
 		Limit:         5,
 		Offset:        1,
-		FromAccountID: sql.NullInt64{Int64: account1.ID, Valid: true},
-		ToAccountID:   sql.NullInt64{Int64: account2.ID, Valid: true},
+		FromAccountID: account1.ID,
+		ToAccountID:   account2.ID,
 	}
 	transfers, err := testQueries.ListTransfers(context.Background(), arg)
 	require.NoError(t, err)
