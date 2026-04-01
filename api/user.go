@@ -20,7 +20,7 @@ type CreateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 }
 
-type CreateUserResponse struct {
+type UserResponse struct {
 	ID                int64        `json:"id"`
 	Username          string       `json:"username"`
 	FullName          string       `json:"full_name"`
@@ -64,7 +64,61 @@ func (server *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	var response CreateUserResponse
+	var response UserResponse
+	response = mapDBToResponseStruct(user, response)
+
+	ctx.JSON(http.StatusCreated, response)
+}
+
+type LoginUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginUserResponse struct {
+	AccessToken string       `json:"access_token"`
+	UserDetails UserResponse `json:"user_details"`
+}
+
+func (server *Server) loginUser(ctx *gin.Context) {
+	var req LoginUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	user, err := server.store.GetUser(ctx, req.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = utils.CheckPassword(user.HashedPassword, req.Password)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	token, err := server.tokenMaker.CreateToken(req.Username, server.config.AccessTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	var userDetails UserResponse
+	userDetails = mapDBToResponseStruct(user, userDetails)
+	response := LoginUserResponse{
+		AccessToken: token,
+		UserDetails: userDetails,
+	}
+
+	ctx.JSON(http.StatusOK, response)
+
+}
+
+func mapDBToResponseStruct(user db.User, response UserResponse) UserResponse {
 	dbVal := reflect.ValueOf(&user).Elem()
 	dbType := dbVal.Type()
 
@@ -81,6 +135,5 @@ func (server *Server) createUser(ctx *gin.Context) {
 			}
 		}
 	}
-
-	ctx.JSON(http.StatusCreated, response)
+	return response
 }

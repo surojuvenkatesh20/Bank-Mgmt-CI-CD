@@ -200,7 +200,7 @@ func TestCreateUser(t *testing.T) {
 			//build stubs
 			tc.buildstubs(mock)
 
-			server := NewServer(mock)
+			server := newTestServer(t, mock)
 			recorder := httptest.NewRecorder()
 			url := "/users"
 
